@@ -5,7 +5,7 @@ from typing import List, Dict
 import torch
 from torch import Tensor
 from torch import nn
-
+        
 
 class SpecificLayerPooling(nn.Module):
     """Performs pooling (max or mean) on the token embeddings.
@@ -130,3 +130,31 @@ class SpecificLayerPooling(nn.Module):
             config = json.load(fIn)
 
         return Pooling(**config)
+
+class MultiLUARsPooling(SpecificLayerPooling):
+    # A dummy pooling just to pass the output of our model to the final results
+    def __init__(self,
+                 word_embedding_dimension: int,
+                 layers: List[int],
+                 pooling_mode: str = None,
+                 pooling_mode_cls_token: bool = False,
+                 pooling_mode_max_tokens: bool = False,
+                 pooling_mode_mean_tokens: bool = True,
+                 pooling_mode_mean_sqrt_len_tokens: bool = False,
+                 ):
+        super(MultiLUARsPooling, self).__init__(word_embedding_dimension, layers, pooling_mode, pooling_mode_cls_token, pooling_mode_max_tokens, pooling_mode_mean_tokens, pooling_mode_mean_sqrt_len_tokens)
+
+    def forward(self, features: Dict[str, Tensor]):
+        all_layer_embeddings = features['all_layer_embeddings']
+        
+        features["sentence_layer_embeddings"] = {}
+        features["token_layer_embeddings"] = {}
+
+        for layer in self.layers:
+
+            layer_embeddings = all_layer_embeddings[:, layer, :]
+            features["token_layer_embeddings"][layer] = layer_embeddings
+            features["sentence_layer_embeddings"][layer] = layer_embeddings
+
+        return features
+        

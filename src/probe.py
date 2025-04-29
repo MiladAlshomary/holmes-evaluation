@@ -39,10 +39,11 @@ def get_hyperparameters(hyperparameters:Dict):
 @click.option('--force', is_flag=True, default=False)
 @click.option('--dump_folder', type=str, default="../dumps")
 @click.option('--result_folder', type=str, default="../results")
+@click.option('--layer', type=int, default=-1)
 def main(
         config_file_path, model_name, model_precision, seeds, num_hidden_layers,
         batch_size, run_probe, run_mdl_probe, project_prefix, dump_preds, force,
-        dump_folder, result_folder
+        dump_folder, result_folder, layer
 ):
     base_path = "/".join(config_file_path.split("/")[:-1]) + "/samples.csv"
 
@@ -52,7 +53,7 @@ def main(
     control_task_type = CONTROL_TASK_TYPES[config["control_task_type"]]
 
     base_config = load_base_config(
-        config=config, encoding=encoding,
+        config=config, encoding=model_precision,
         seeds=seeds, num_hidden_layers=num_hidden_layers,
         model_name=model_name, batch_size=batch_size,
         control_task_type=control_task_type, project_prefix=project_prefix

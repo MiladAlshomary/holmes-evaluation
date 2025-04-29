@@ -8,11 +8,11 @@ from model.FourBitTransformer import FourBitTransformer
 from model.HalfPrecisionTransformer import HalfPrecisionTransformer
 from model.ParallelSentenceTransformer import ParallelSentenceTransformer
 from model.transformer_adaptions import BartTransformer
-from utils.SpecificLayerPooling import SpecificLayerPooling
+from utils.SpecificLayerPooling import SpecificLayerPooling, MultiLUARsPooling
 from utils.experiment_util import init_random_weights
+import os
 
-
-def load_model(model_name, control_task_type, encoding, scalar_mixin=False):
+def load_model(model_name, control_task_type, encoding, scalar_mixin=False, layer=-1):
 
     if "glove" in model_name:
         base_model = SentenceTransformer(model_name)
@@ -28,8 +28,25 @@ def load_model(model_name, control_task_type, encoding, scalar_mixin=False):
             transformer = FourBitTransformer(model_name, model_args={"output_hidden_states": True})
         elif encoding == "eight_bit":
             transformer = EightBitTransformer(model_name, model_args={"output_hidden_states": True})
+        elif encoding == "multi-luar":
+            model_path = os.environ.get('MULTILUAR_MODEL_PATH', '')
+            print('============ Loading Model:', model_path)
+            transformer = Transformer(model_path, 
+                                      model_args={'trust_remote_code':True}, 
+                                      config_args={'sentence_transformer_support':True, 
+                                                   'trust_remote_code':True,
+                                                   'output_hidden_states':True}
+                        )
+            print("============================ Using Output Layer:" , layer)
+            base_model = ParallelSentenceTransformer(modules=[transformer, MultiLUARsPooling(word_embedding_dimension=transformer.get_word_embedding_dimension(), layers=[layer])])
+            base_model = base_model.to('cuda')
+            
+            if base_model.tokenizer.pad_token is None:
+                base_model.tokenizer.pad_token = base_model.tokenizer.eos_token
+
+            return base_model
         else:
-            transformer = Transformer(model_name, model_args={"output_hidden_states": True})
+            transformer = Transformer(model_name, config_args={"output_hidden_states": True})
 
         if control_task_type == CONTROL_TASK_TYPES.RANDOM_WEIGHTS and model_name in ["t5-base", "roberta-base", "microsoft/deberta-base", "microsoft/deberta-v3-base", "bert-base-uncased", "albert-base-v2", "google/electra-base-discriminator"]:
             transformer.auto_model.encoder.apply(init_random_weights)
@@ -41,9 +58,10 @@ def load_model(model_name, control_task_type, encoding, scalar_mixin=False):
 
         word_embedding_dimension = transformer.get_word_embedding_dimension()
 
+        print("============================ Using Output Layer:" , layer)
         pooling = SpecificLayerPooling(
             word_embedding_dimension=word_embedding_dimension,
-            layers=[-1], pooling_mode="mean"
+            layers=[layer], pooling_mode="mean"
         )
 
         base_model = ParallelSentenceTransformer(modules=[transformer,pooling])

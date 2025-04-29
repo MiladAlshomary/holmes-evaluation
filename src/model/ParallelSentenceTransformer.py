@@ -76,7 +76,6 @@ class ParallelSentenceTransformer(SentenceTransformer):
 
             with torch.no_grad():
                 out_features = self.forward(features)
-
                 for layer in out_features["sentence_layer_embeddings"].keys():
                     if output_value == 'token_layer_embeddings':
                         embeddings = []

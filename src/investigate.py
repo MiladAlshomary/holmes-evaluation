@@ -21,10 +21,11 @@ import click
 @click.option('--parallel_probing', is_flag=True, default=False)
 @click.option('--dump_folder', type=str, default="../dumps")
 @click.option('--result_folder', type=str, default="../results")
+@click.option('--layer', type=int, default=-1)
 def main(
         version, model_name, run_probe, run_mdl_probe, num_hidden_layers, cuda_visible_devices,
         seeds, model_precision, encoding_batch_size, force_encoding, force_probing, dump_preds,
-        control_task_types, in_filter, parallel_probing, dump_folder, result_folder
+        control_task_types, in_filter, parallel_probing, dump_folder, result_folder, layer
 ):
     failed_runs = []
 
@@ -35,12 +36,14 @@ def main(
     os.system(f"mkdir -p {result_folder}/{version}/")
 
     for control_task_type in control_task_types.split(","):
+        #print(f"../data/{version}/*/*{control_task_type}*.yaml")
+        #print(sorted(glob.glob(f"../data/{version}/*/*{control_task_type}*.yaml")))
         for config_file_path in sorted(glob.glob(f"../data/{version}/*/*{control_task_type}*.yaml"), reverse=True):
 
             if in_filter != None and in_filter + "/" not in config_file_path:
                 continue
 
-            encode_command = f"python3 encode.py --dump_folder {dump_folder}/{version} --config_file_path {config_file_path} --model_name {model_name} --model_precision {model_precision} --encoding_batch_size {encoding_batch_size}"
+            encode_command = f"python3 encode.py --dump_folder {dump_folder}/{version} --config_file_path {config_file_path} --model_name {model_name} --model_precision {model_precision} --encoding_batch_size {encoding_batch_size} --layer {layer}"
 
             if force_encoding:
                 encode_command += " --force"
@@ -84,7 +87,8 @@ def main(
                 file = open(model_name.replace("/", "_") + "_fails.txt", "w+")
                 file.writelines(failed_runs)
 
-    probing_command = f"python3 evaluate.py --result_folder {result_folder} --version {version}"
+
+    probing_command = f"python3 evaluate.py --result_folder {result_folder} --version {version} --output_layer {layer}"
     print(f"Gathering Results: {probing_command}")
     os.system(probing_command)
 

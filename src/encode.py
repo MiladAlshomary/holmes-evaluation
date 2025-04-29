@@ -18,8 +18,9 @@ from utils.session_utils import clean_session
 @click.option('--model_precision', type=str, default="full")
 @click.option('--dump_folder', type=str, default="../dumps")
 @click.option('--force', is_flag=True, default=False)
+@click.option('--layer', type=int, default=-1)
 def main(
-        config_file_path, encoding_batch_size, model_name, model_precision, dump_folder, force
+        config_file_path, encoding_batch_size, model_name, model_precision, dump_folder, force, layer
 ):
     base_path = "/".join(config_file_path.split("/")[:-1]) + "/samples.csv"
 
@@ -44,7 +45,7 @@ def main(
 
 
     dump_data(probe_frame, probe_task_type, control_task_type, encoding_batch_size, dump_path,
-                               model_name, model_precision, scalar_mixin=False)
+                               model_name, model_precision, layer, scalar_mixin=False)
 
 
 if __name__ == "__main__":

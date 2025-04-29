@@ -7,8 +7,9 @@ import pandas
 @click.command()
 @click.option('--result_folder', type=str, default='../results')
 @click.option('--version', type=str, default="holmes-datasets")
+@click.option('--output_layer', type=int, default=-1)
 def main(
-        result_folder, version
+        result_folder, version, output_layer
 ):
     result_files = glob.glob(f"{result_folder}/{version}/**/done/*.csv", recursive=True)
     results = []
@@ -31,13 +32,13 @@ def main(
 
         results.append({
             "probing_dataset": probing_dataset,
-            "model_name": model_name,
+            "model_name": model_name + "_layer_{}".format(output_layer),
             "encoding": encoding,
             "control_task_type": control_task_type,
             "sample_size": sample_size,
             "seed": seed,
             "num_hidden_layers": num_hidden_layers,
-            "score": final_metric
+            "score": final_metric,
         })
 
     result_frame = pandas.DataFrame(results)

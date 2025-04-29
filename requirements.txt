@@ -7,10 +7,9 @@ ray==2.6.2
 scipy==1.11.1
 sentence-transformers==2.2.2
 torch==2.0.1
-torchmetrics==0.6.1
+torchmetrics==0.7.0
 tqdm==4.66.3
 accelerate==0.28.0
 transformers==4.39.0
-pytorch_lightning==1.5.5
-ray==2.8.1
+pytorch_lightning==1.8
 gdown==5.2.0

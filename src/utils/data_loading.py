@@ -608,15 +608,15 @@ def load_shared_datasets(probing_frames):
 
     return train_dataset, dev_dataset, test_dataset
 
-def dump_data(probe_frame, probe_task_type, control_task_type, encoding_batch_size, dump_path, model_name, encoding, scalar_mixin=False):
-    base_model = load_model(model_name, control_task_type, encoding, scalar_mixin=scalar_mixin)
+def dump_data(probe_frame, probe_task_type, control_task_type, encoding_batch_size, dump_path, model_name, encoding, layer, scalar_mixin=False):
+    base_model = load_model(model_name, control_task_type, encoding, scalar_mixin=scalar_mixin, layer=layer)
 
     probing_frames = load_folds(
         probe_frame=probe_frame,
         base_model=base_model,
         probe_task_type=probe_task_type,
         encoding=encoding,
-        encoding_batch_size=encoding_batch_size,
+        encoding_batch_size=encoding_batch_size
     )
 
     try:
