@@ -14,6 +14,32 @@ import os
 
 def load_model(model_name, control_task_type, encoding, scalar_mixin=False, layer=-1):
 
+    print("Model Name >>>>>>>>>>>>>>>>>>>>>>> ", model_name)
+    if model_name in ["multi-luar", "luar"]:
+        model_path = os.environ.get('LUAR_MODEL_PATH', '')
+        print('>>>>>>>>>>>>>>>>>>>>>>> Loading Model:', model_path)
+        transformer = Transformer(model_path, 
+                                  model_args={'trust_remote_code':True}, 
+                                  config_args={'sentence_transformer_support':True, 
+                                               'trust_remote_code':True,
+                                               'output_hidden_states':True}
+                    )
+        print("Task Type >>>>>>>>>>>>>>>>>>>>>>> " , control_task_type)
+        
+        if control_task_type == CONTROL_TASK_TYPES.RANDOM_WEIGHTS:
+            transformer.auto_model.encoder.apply(init_random_weights)
+            
+        print(" >>>>>>>>>>>>>>>>>>>>>>> Using Output Layer:" , layer)
+        #base_model = ParallelSentenceTransformer(modules=[transformer, MultiLUARsPooling(word_embedding_dimension=transformer.get_word_embedding_dimension(), layers=[layer])])
+        base_model = ParallelSentenceTransformer(modules=[transformer, SpecificLayerPooling(word_embedding_dimension=transformer.get_word_embedding_dimension(), layers=[layer])])
+        
+        base_model = base_model.to('cuda')
+        
+        if base_model.tokenizer.pad_token is None:
+            base_model.tokenizer.pad_token = base_model.tokenizer.eos_token
+    
+        return base_model
+        
     if "glove" in model_name:
         base_model = SentenceTransformer(model_name)
     else:
@@ -28,23 +54,6 @@ def load_model(model_name, control_task_type, encoding, scalar_mixin=False, laye
             transformer = FourBitTransformer(model_name, model_args={"output_hidden_states": True})
         elif encoding == "eight_bit":
             transformer = EightBitTransformer(model_name, model_args={"output_hidden_states": True})
-        elif encoding == "multi-luar":
-            model_path = os.environ.get('MULTILUAR_MODEL_PATH', '')
-            print('============ Loading Model:', model_path)
-            transformer = Transformer(model_path, 
-                                      model_args={'trust_remote_code':True}, 
-                                      config_args={'sentence_transformer_support':True, 
-                                                   'trust_remote_code':True,
-                                                   'output_hidden_states':True}
-                        )
-            print("============================ Using Output Layer:" , layer)
-            base_model = ParallelSentenceTransformer(modules=[transformer, MultiLUARsPooling(word_embedding_dimension=transformer.get_word_embedding_dimension(), layers=[layer])])
-            base_model = base_model.to('cuda')
-            
-            if base_model.tokenizer.pad_token is None:
-                base_model.tokenizer.pad_token = base_model.tokenizer.eos_token
-
-            return base_model
         else:
             transformer = Transformer(model_name, config_args={"output_hidden_states": True})
 

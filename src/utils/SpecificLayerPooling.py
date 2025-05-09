@@ -71,6 +71,7 @@ class SpecificLayerPooling(nn.Module):
         return "+".join(modes)
 
     def forward(self, features: Dict[str, Tensor]):
+        
         all_layer_embeddings = features['all_layer_embeddings']
         all_layer_embedding = torch.stack(all_layer_embeddings)
 
